@@ -1,0 +1,14 @@
+[project]
+name = "convolutions"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.1",
+    "pyright>=1.1.411",
+    "scikit-image>=0.26.0",
+    "torch>=2.13.0",
+    "torchvision>=0.28.0",
+]
