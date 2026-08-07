@@ -3,6 +3,11 @@
 Hands-on implementations of convolutional neural network building blocks, from raw
 cross-correlation up to a full LeNet trained on FashionMNIST.
 
+## Papers Referred
+
+- [ImageNet Classification with Deep Convolutional Neural Networks (AlexNet)](https://proceedings.neurips.cc/paper_files/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf)
+- [GradientBased Learning Applied to Document Recognition (LeNet)](https://github.com/georgezoto/Convolutional-Neural-Networks/blob/master/Papers/1998%20LeNet-5%20GradientBased%20Learning%20Applied%20to%20Document%20Recognition%20-%20LeCun%2C%20Bottou%2C%20Bengio%2C%20Hanner.pdf)
+
 ## Contents
 
 ### `notebooks/` — building blocks from scratch
@@ -14,17 +19,22 @@ cross-correlation up to a full LeNet trained on FashionMNIST.
 | `pooling.ipynb` | Max/average pooling, with stride, padding, and multiple channels |
 | `edge_detect.ipynb` | Edge detection with a Laplacian kernel, plus training a conv layer to learn it |
 
-### `LeNet/` — a reusable model package
+### `LeNet/`
 
 | File | Purpose |
 | --- | --- |
 | `model.py` | The `LeNet` module (lazy conv/linear layers) + Xavier `init_weights` helper |
-| `train.py` | A typed `train()` loop |
 
 ### `LeNet.ipynb` — end-to-end pipeline
 
 Loads FashionMNIST → trains LeNet (on MPS/CUDA/CPU) → predicts and visualizes a
 batch → reports full test-set accuracy.
+
+### `AlexNet/`
+
+| File | Purpose |
+| --- | --- |
+| `model.py` | The `AlexNet` module (lazy conv/linear layers) + ReLU normalization + Kaiming `init_weights` helper |
 
 ## Setup
 
