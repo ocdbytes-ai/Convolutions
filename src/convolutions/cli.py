@@ -24,7 +24,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train ResNet18 on CIFAR-10")
     parser.add_argument("--epochs", type=int, default=int(os.environ.get("EPOCHS", 50)))
     parser.add_argument("--batch-size", type=int, default=int(os.environ.get("BATCH_SIZE", 128)))
-    parser.add_argument("--lr", type=float, default=float(os.environ.get("LR", 0.1)))
+    parser.add_argument("--lr", type=float, default=float(os.environ.get("LR", 0.01)))
     parser.add_argument("--workers", type=int, default=int(os.environ.get("WORKERS", 4)))
     parser.add_argument("--data-root", default=os.environ.get("DATA_ROOT", "./data"))
     parser.add_argument("--out-dir", default=os.environ.get("OUT_DIR", "./outputs"))

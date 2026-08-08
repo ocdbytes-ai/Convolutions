@@ -42,15 +42,20 @@ def train(
     model.to(device)
     model.train()
 
-    # Mixed precision on CUDA: fp16 autocast routes conv/matmul through Tensor
-    # Cores (much faster than fp32) and GradScaler keeps fp16 gradients from
-    # underflowing. Disabled on MPS/CPU, so the code path below is a no-op there
-    # and those devices behave exactly as before.
+    # Mixed precision on CUDA: autocast routes conv/matmul through Tensor Cores
+    # (much faster than fp32). Prefer bf16 — it has fp32's exponent range, so it
+    # can't overflow the way fp16 does (fp16 max ~65504 -> NaN on large early
+    # activations) and needs no GradScaler. Fall back to fp16 + GradScaler on
+    # GPUs without bf16. Disabled on MPS/CPU, so those devices are unaffected.
     use_amp = device.type == "cuda"
+    amp_dtype = torch.float16
     if use_amp:
-        # let cuDNN autotune the fastest conv kernels for the fixed input size
-        torch.backends.cudnn.benchmark = True
-    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+        torch.backends.cudnn.benchmark = True  # autotune conv kernels for fixed input
+        if torch.cuda.is_bf16_supported():
+            amp_dtype = torch.bfloat16
+    # scaling is only needed for fp16 (bf16's wide exponent range makes it moot)
+    use_scaler = use_amp and amp_dtype == torch.float16
+    scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
 
     for epoch in range(epochs):
         epoch_loss: float = 0.0
@@ -61,17 +66,25 @@ def train(
         epoch_start = time.perf_counter()
         for (X_batch, y_batch) in train_data_loader:
             X, y = X_batch.to(device), y_batch.to(device)
-
             optimiser.zero_grad()
-            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+
+            if use_amp:
+                # CUDA: autocast + (fp16 only) gradient scaling
+                with torch.autocast(device_type=device.type, dtype=amp_dtype):
+                    Y = model(X)
+                    loss = loss_fn(Y, y).mean()
+                epoch_loss += loss.item()
+                scaler.scale(loss).backward()
+                scaler.step(optimiser)
+                scaler.update()
+            else:
+                # MPS/CPU: plain fp32 path — identical to the pre-AMP loop, so
+                # no autocast/scaler overhead is added on these devices.
                 Y = model(X)
                 loss = loss_fn(Y, y).mean()
-            epoch_loss += loss.item()
-
-            # backpropogation (scaler is a no-op when AMP is disabled)
-            scaler.scale(loss).backward()
-            scaler.step(optimiser)
-            scaler.update()
+                epoch_loss += loss.item()
+                loss.backward()
+                optimiser.step()
 
             # throughput + memory profiling
             seen += X.size(0)
