@@ -99,6 +99,10 @@ inside the WSL distro. Run `nvidia-smi` on the host and check the **CUDA Version
 reports (top-right) is **≥ 13.0** that's the max CUDA your driver supports, and this
 project's torch needs CUDA 13.
 
+> First time setting up the GPU, or hitting `could not select device driver "nvidia"`?
+> See **[deploy/cuda_setup.md](deploy/cuda_setup.md)** for step-by-step WSL and native
+> Linux setup + troubleshooting.
+
 Build the image once (via compose, so the tag/context match the training run), then
 confirm the container actually sees the GPU using the project's own CUDA-13 torch:
 
