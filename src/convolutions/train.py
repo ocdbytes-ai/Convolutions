@@ -41,6 +41,17 @@ def train(
 ) -> None:
     model.to(device)
     model.train()
+
+    # Mixed precision on CUDA: fp16 autocast routes conv/matmul through Tensor
+    # Cores (much faster than fp32) and GradScaler keeps fp16 gradients from
+    # underflowing. Disabled on MPS/CPU, so the code path below is a no-op there
+    # and those devices behave exactly as before.
+    use_amp = device.type == "cuda"
+    if use_amp:
+        # let cuDNN autotune the fastest conv kernels for the fixed input size
+        torch.backends.cudnn.benchmark = True
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+
     for epoch in range(epochs):
         epoch_loss: float = 0.0
         seen: int = 0
@@ -50,14 +61,17 @@ def train(
         epoch_start = time.perf_counter()
         for (X_batch, y_batch) in train_data_loader:
             X, y = X_batch.to(device), y_batch.to(device)
-            Y = model(X)
-            loss = loss_fn(Y, y).mean()
+
+            optimiser.zero_grad()
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+                Y = model(X)
+                loss = loss_fn(Y, y).mean()
             epoch_loss += loss.item()
 
-            # backpropogation
-            optimiser.zero_grad()
-            loss.backward()
-            optimiser.step()
+            # backpropogation (scaler is a no-op when AMP is disabled)
+            scaler.scale(loss).backward()
+            scaler.step(optimiser)
+            scaler.update()
 
             # throughput + memory profiling
             seen += X.size(0)
