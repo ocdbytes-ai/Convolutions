@@ -12,10 +12,10 @@ services:
     volumes:
       - type: bind
         source: ../data                # CIFAR download persists here
-        target: /workspace/data
+        target: /app/data
       - type: bind
         source: ../outputs             # checkpoint written here
-        target: /workspace/outputs
+        target: /app/outputs
     # DataLoader workers share memory via /dev/shm; the container default (64MB)
     # is too small and causes "DataLoader worker killed" bus errors. Raise it.
     shm_size: "2gb"
