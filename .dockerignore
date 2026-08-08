@@ -1,0 +1,16 @@
+# Build context is the repo root; keep the image to source + packaging only.
+.venv
+data
+outputs
+.git
+.gitignore
+__pycache__
+**/__pycache__
+*.pyc
+*.egg-info
+build
+dist
+wheels
+notebooks
+*.ipynb
+.python-version
