@@ -10,8 +10,12 @@ services:
     # argparse flags for train-resnet; edit freely.
     command: ["--epochs", "100", "--batch-size", "256", "--workers", "4"]
     volumes:
-      - ../data:/workspace/data        # CIFAR download persists here
-      - ../outputs:/workspace/outputs  # checkpoint written here
+      - type: bind
+        source: ../data                # CIFAR download persists here
+        target: /workspace/data
+      - type: bind
+        source: ../outputs             # checkpoint written here
+        target: /workspace/outputs
     # DataLoader workers share memory via /dev/shm; the container default (64MB)
     # is too small and causes "DataLoader worker killed" bus errors. Raise it.
     shm_size: "2gb"
